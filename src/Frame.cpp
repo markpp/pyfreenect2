@@ -4,7 +4,7 @@
 using libfreenect2::Frame;
 
 void py_Frame_destroy(PyObject *frameCapsule) {
-	delete ((Frame*) PyCapsule_GetPointer(frameCapsule, "Frame"));
+	// delete ((Frame*) PyCapsule_GetPointer(frameCapsule, "Frame"));
 }
 
 PyObject *py_Frame_getHeight(PyObject *self, PyObject *args) {
@@ -33,10 +33,10 @@ PyObject *py_Frame_getData(PyObject *self, PyObject *args) {
 	npy_intp dims[] = {frame->height, frame->width, 4 };
 
 	// this should be elsewhere, however, fails without it.
-	import_array();
+	import_array1(NULL);
 
-	PyArrayObject *array = (PyArrayObject*) PyArray_SimpleNewFromData(3, 
-									  dims, 
+	PyArrayObject *array = (PyArrayObject*) PyArray_SimpleNewFromData(3,
+									  dims,
 									  NPY_UINT8,
 									  frame->data);
 
@@ -51,13 +51,13 @@ PyObject *py_Frame_getDepthData(PyObject *self, PyObject *args)
 		return NULL;
 	Frame *frame = (Frame*) PyCapsule_GetPointer(frameCapsule, "Frame");
 
-	npy_intp dims[] = {frame->height, frame->width, 4};
+	npy_intp dims[] = {frame->height, frame->width};
 
-	import_array();
+	import_array1(NULL);
 
-	PyArrayObject *array = (PyArrayObject*) PyArray_SimpleNewFromData(3, 
-									  dims, 
-									  NPY_UINT8,
+	PyArrayObject *array = (PyArrayObject*) PyArray_SimpleNewFromData(2,
+									  dims,
+									  NPY_FLOAT,
 									  frame->data);
 	return (PyObject*) array;
 }

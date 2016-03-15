@@ -1,10 +1,11 @@
 #include "../pyfreenect2.hpp"
-
+#include <iostream>
 using libfreenect2::Frame;
 using libfreenect2::FrameMap;
 
 void py_FrameMap_destroy(PyObject *frameMapCapsule) {
-	delete ((FrameMap*) PyCapsule_GetPointer(frameMapCapsule, "FrameMap"));
+    
+	// delete ((FrameMap*) PyCapsule_GetPointer(frameMapCapsule, "FrameMap"));
 }
 
 PyObject *py_FrameMap_getFrame(PyObject *self, PyObject *args) {

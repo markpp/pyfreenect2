@@ -10,7 +10,9 @@ PyObject *py_Freenect2Device_new(PyObject *self, PyObject *args) {
 		return NULL;
 
 	// TODO Pipeline support
-	Freenect2Device *device = getGlobalFreenect2().openDevice(serialNumber);
+    libfreenect2::PacketPipeline *pipeline = 0;
+    pipeline = new libfreenect2::OpenGLPacketPipeline();
+	Freenect2Device *device = getGlobalFreenect2().openDevice(serialNumber, pipeline);
 	return PyCapsule_New(device, "Freenect2Device", py_Freenect2Device_destroy);
 }
 void py_Freenect2Device_destroy(PyObject *deviceCapsule) {

@@ -4,6 +4,12 @@ import cv2
 import scipy.misc
 import signal
 import pyfreenect2
+import time
+import numpy as np
+
+
+
+import matplotlib.pyplot as plt
 
 # This is pretty much a straight port of the Protonect program bundled with
 # libfreenect2.
@@ -12,17 +18,8 @@ import pyfreenect2
 serialNumber = pyfreenect2.getDefaultDeviceSerialNumber()
 kinect = pyfreenect2.Freenect2Device(serialNumber)
 
-# Set up signal handler
-shutdown = False
-def sigint_handler(signum, frame):
-	print "Got SIGINT, shutting down..."
-	shutdown = True
-signal.signal(signal.SIGINT, sigint_handler)
-
 # Set up frame listener
-frameListener = pyfreenect2.SyncMultiFrameListener(pyfreenect2.Frame.COLOR,
-	pyfreenect2.Frame.IR,
-	pyfreenect2.Frame.DEPTH)
+frameListener = pyfreenect2.SyncMultiFrameListener(pyfreenect2.Frame.COLOR, pyfreenect2.Frame.IR, pyfreenect2.Frame.DEPTH)
 
 print frameListener
 kinect.setColorFrameListener(frameListener)
@@ -46,29 +43,37 @@ registration = pyfreenect2.Registration(kinect.ir_camera_params, kinect.color_ca
 cv2.namedWindow("RGB")
 # cv2.namedWindow("IR")
 cv2.namedWindow("Depth")
+cv2.startWindowThread()
 
 # Main loop
-while not shutdown:
-	frames = frameListener.waitForNewFrame()
-	rgbFrame = frames.getFrame(pyfreenect2.Frame.COLOR)
-#	irFrame = frames.getFrame(pyfreenect2.Frame.IR)
-        depthFrame = frames.getFrame(pyfreenect2.Frame.DEPTH)
+idx  = 0
+while 1:
+    frames = frameListener.waitForNewFrame()
 
-        rgb_frame = rgbFrame.getRGBData()
-        bgr_frame = rgb_frame.copy()
-        bgr_frame[:,:,0] = rgb_frame[:,:,2]
-        bgr_frame[:,:,2] = rgb_frame[:,:,0]
+    rgbFrame = frames.getFrame(pyfreenect2.Frame.COLOR)
+    depthFrame = frames.getFrame(pyfreenect2.Frame.DEPTH)
 
-        depth_frame = depthFrame.getDepthData()
-#        depth_frame = frames.getFrame(pyfreenect2.Frame.DEPTH).getData()
+    rgb_frame = rgbFrame.getRGBData()
+    bgr_frame = rgb_frame.copy()
+    bgr_frame[:,:,0] = rgb_frame[:,:,2]
+    bgr_frame[:,:,2] = rgb_frame[:,:,0]
 
-        bgr_frame_resize = scipy.misc.imresize(bgr_frame, size = .5)
-        depth_frame_resize = scipy.misc.imresize(depth_frame, size = .5)
+    depth_frame = depthFrame.getDepthData()
+    #bgr_frame_resize = scipy.misc.imresize(bgr_frame, size = .5)
+    #depth_frame_resize = scipy.misc.imresize(depth_frame, size = .5)
 
-	# TODO Display the frames w/ OpenCV
-	cv2.imshow("RGB", bgr_frame_resize)
-	cv2.imshow("Depth", depth_frame_resize)
-        cv2.waitKey(20)
+    frameListener.release()
+
+     cv2.imshow("RGB", bgr_frame_resize)
+    dmin = 0.0
+    dmax = 3000.0   # 3m
+    s = 255.0/(dmax - dmin)
+    dd = ((depth_frame - dmin) * s).astype(np.uint8)
+
+    dst = cv2.applyColorMap(dd,2)
+    cv2.imshow("Depth",dst)
+    cv2.waitKey(5)
+
 
 kinect.stop()
 kinect.close()

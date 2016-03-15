@@ -2,3 +2,4 @@ build/
 dist/
 pyfreenect2.egg-info/
 *.pyc
+.DS_Store
