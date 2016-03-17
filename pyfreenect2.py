@@ -24,8 +24,7 @@ class PyFreeNect2(object):
         self.kinect.setColorFrameListener(self.frameListener)
         self.kinect.setIrAndDepthFrameListener(self.frameListener)
         self.kinect.start()
-        self.registration = Registration(self.kinect.ir_camera_params,
-                                         self.kinect.color_camera_params)
+        self.registration = Registration(self.kinect)
         print "%s setup done" % (self.__class__.__name__)
 
     def get_new_frame(self, get_BGR=False):
@@ -187,6 +186,12 @@ class Frame:
         RGB = swap_c0c2(BGR)
         return RGB
 
+    def getBGRData(self):
+        ## todo fix copy necessity (reference counting to frame)
+        ## todo fix fliplr necessity
+        BGR = np.fliplr(_pyfreenect2.Frame_getData(self._capsule).copy())
+        return BGR
+
     def getDepthData(self):
         ## todo fix copy necessity (reference counting to frame)
         ## todo fix fliplr necessity
@@ -198,8 +203,11 @@ class Frame:
 ################################################################################
 
 class Registration:
-    def __init__(self, ir_camera_params, color_camera_params):
-        self._capsule = _pyfreenect2.Registration_new(ir_camera_params, color_camera_params)
+    def __init__(self, device):
+        self._capsule = _pyfreenect2.Registration_new(device._capsule)
 
     def apply(self, rgbFrame, depthFrame):
-        return _pyfreenect2.Registration_apply(self._capsule, rgbFrame, depthFrame)
+        rgb_capsule = rgbFrame._capsule
+        depth_capsule = depthFrame._capsule
+        (_undist, _reg, _bd) = _pyfreenect2.Registration_apply(self._capsule, rgb_capsule, depth_capsule)
+        return (Frame(_undist),Frame(_reg), Frame(_bd))
