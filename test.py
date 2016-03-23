@@ -44,32 +44,41 @@ idx  = 0
 while 1:
     frames = frameListener.waitForNewFrame()
 
+    # Grab a framepair for registration
     rgbFrame = frames.getFrame(pyfreenect2.Frame.COLOR)
     depthFrame = frames.getFrame(pyfreenect2.Frame.DEPTH)
 
-    #bgr_frame = rgbFrame.getBGRData()
-    #depth_frame = depthFrame.getDepthData()
+    (undistorted,registered, bigdepth) = registration.apply(rgbFrame=rgbFrame, depthFrame=depthFrame)
 
-    (u,r,bd) = registration.apply(rgbFrame=rgbFrame, depthFrame=depthFrame)
+    depth_frame = bigdepth.getDepthData()
+    h = 480
+    w = 640
+    # Crop out patches of the mapped depth image. This is necessary because the RGB
+    # camera has a wider field of view than the depth sensor
+    cy, cx = (depth_frame.shape[0] - h)/2 , (depth_frame.shape[1] - w)/2
+    depth_frame = depth_frame[cy:cy+h,cx:cx+w]
+    # Crop the same piece out of the color image
+    # Attention, this is BGR here for rendering convenience (no need to transform to RGB)
+    color_frame = rgbFrame.getBGRData()
+    # Crop as well
+    color_frame = color_frame[cy:cy+h,cx:cx+w]
 
-    depth_frame = bd.getDepthData()
-
-
+    # Make the depth appear nice (may cost some performance here)
     dmin = 0.0
     dmax = 3000.0   # 3m
     s = 255.0/(dmax - dmin)
     dd = ((depth_frame - dmin) * s).astype(np.uint8)
     dst = cv2.applyColorMap(dd,2)
 
-
-
-
     cv2.imshow("Depth",dst)
+    cv2.imshow("RGB", color_frame)
     #cv2.imshow("RGB", bgr_frame)
-    # Mandatory !
+
+    # Wait some seconds
     k = cv2.waitKey(5)
     if k == ord("c"):
         break
+    # This call is mandatory and required by libfreenect2!
     frameListener.release()
 
 

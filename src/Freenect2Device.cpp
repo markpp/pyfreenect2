@@ -21,6 +21,10 @@ PyObject *py_Freenect2Device_new(PyObject *self, PyObject *args) {
             std::cout << "[PyFreeNect2] Using OpenGL packet pipeline." << std::endl;
             pipeline = new libfreenect2::OpenGLPacketPipeline();
         }
+        // todo add CudaPacketPipeline and OpenCLPacketPipeline
+        else {
+            // raise TheDeveloperIsALazyBastardError
+        }
         device = getGlobalFreenect2().openDevice(serialNumber, pipeline);
     }
     else {
