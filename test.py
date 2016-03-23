@@ -1,15 +1,18 @@
 #!/usr/bin/env python
+import signal
+import time
+import os
+import datetime
 
 import cv2
 import scipy.misc
-import signal
-import pyfreenect2
-import time
 import numpy as np
 
-
+import pyfreenect2
 
 import matplotlib.pyplot as plt
+
+REPO_HOME = "/Users/sebastian/Projects/food3d/"
 
 # This is pretty much a straight port of the Protonect program bundled with
 # libfreenect2.
@@ -65,7 +68,7 @@ while 1:
 
     # Make the depth appear nice (may cost some performance here)
     dmin = 0.0
-    dmax = 3000.0   # 3m
+    dmax = 2000.0   # 3m
     s = 255.0/(dmax - dmin)
     dd = ((depth_frame - dmin) * s).astype(np.uint8)
     dst = cv2.applyColorMap(dd,2)
@@ -77,10 +80,16 @@ while 1:
     # Wait some seconds
     k = cv2.waitKey(5)
     if k == ord("c"):
-        break
+        # Dump both bgr and depth
+        ts = time.time()
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
+        st = "kinectv2_" + st
+        print "Saving to " + REPO_HOME + " with prefix " + st
+        np.save(REPO_HOME + "/" + st + "_depth.npy", depth_frame)
+        np.save(REPO_HOME + "/" + st + "_bgr.npy", color_frame)
     # This call is mandatory and required by libfreenect2!
     frameListener.release()
 
 
 kinect.stop()
-kinect.close()
+# kinect.close()
