@@ -5,6 +5,10 @@ from collections import namedtuple
 ExtractedKinectFrame = namedtuple("ExtractedKinectFrame",
                                   ['RGB', 'BGR', 'IR', 'DEPTH'])
 
+USE_DEFAULT_PACKET_PIPELINE = 0
+USE_CPU_PACKET_PIPELINE = 1
+USE_OPENGL_PACKET_PIPELINE = 2
+
 
 def swap_c0c2(a):
     a2 = a.copy()
@@ -85,10 +89,9 @@ def getDefaultDeviceSerialNumber():
 ################################################################################
 
 class Freenect2Device:
-    def __init__(self, serialNumber, pipeline=None):
-        if pipeline is not None:
-            raise DeveloperIsALazyBastardError("pyfreenect2.PacketPipeline is not yet implemented")
-        self._capsule = _pyfreenect2.Freenect2Device_new(serialNumber)
+
+    def __init__(self, serialNumber, pipeline=0):
+        self._capsule = _pyfreenect2.Freenect2Device_new(serialNumber, pipeline)
 
     def start(self):
         _pyfreenect2.Freenect2Device_start(self._capsule)

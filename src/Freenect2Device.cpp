@@ -6,14 +6,28 @@ using libfreenect2::FrameListener;
 
 PyObject *py_Freenect2Device_new(PyObject *self, PyObject *args) {
 	char *serialNumber = NULL;
-	if(!PyArg_ParseTuple(args, "s", &serialNumber))
+    int p = NULL;
+	if(!PyArg_ParseTuple(args, "si", &serialNumber, &p))
 		return NULL;
-
-	// TODO Pipeline support
-    libfreenect2::PacketPipeline *pipeline = 0;
-    pipeline = new libfreenect2::OpenGLPacketPipeline();
-	Freenect2Device *device = getGlobalFreenect2().openDevice(serialNumber, pipeline);
-    std::cout << device << std::endl;
+    int pipe = p;
+    Freenect2Device *device = NULL;
+    if(pipe > 0 && pipe < 3) {
+        libfreenect2::PacketPipeline *pipeline = 0;
+        if(pipe == 1) {
+            std::cout << "[PyFreeNect2] Using CPU packet pipeline." << std::endl;
+            pipeline = new libfreenect2::CpuPacketPipeline();
+        }
+        else if(pipe == 2) {
+            std::cout << "[PyFreeNect2] Using OpenGL packet pipeline." << std::endl;
+            pipeline = new libfreenect2::OpenGLPacketPipeline();
+        }
+        device = getGlobalFreenect2().openDevice(serialNumber, pipeline);
+    }
+    else {
+        std::cout << "[PyFreeNect2] No pipeline specified or unknown. Defaulting." << std::endl;
+        device = getGlobalFreenect2().openDevice(serialNumber);
+    }
+    std::cout << "[PyFreeNect2] Instantiated device at address "<< device << std::endl;
 	return PyCapsule_New(device, "Freenect2Device", py_Freenect2Device_destroy);
 }
 void py_Freenect2Device_destroy(PyObject *deviceCapsule) {

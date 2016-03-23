@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 # Initialize device
 serialNumber = pyfreenect2.getDefaultDeviceSerialNumber()
-kinect = pyfreenect2.Freenect2Device(serialNumber)
+kinect = pyfreenect2.Freenect2Device(serialNumber, pyfreenect2.USE_OPENGL_PACKET_PIPELINE)
 
 # Set up frame listener
 frameListener = pyfreenect2.SyncMultiFrameListener(pyfreenect2.Frame.COLOR, pyfreenect2.Frame.IR, pyfreenect2.Frame.DEPTH)
@@ -61,7 +61,7 @@ while 1:
     dd = ((depth_frame - dmin) * s).astype(np.uint8)
     dst = cv2.applyColorMap(dd,2)
 
-    
+
 
 
     cv2.imshow("Depth",dst)
