@@ -12,7 +12,13 @@ import pyfreenect2
 
 import matplotlib.pyplot as plt
 
+
 REPO_HOME = "/Users/sebastian/Projects/food3d/"
+DUMP_INTERVAL = 10  # Dump every 50. frame
+
+# Center crop frame size
+h = 480
+w = 640
 
 # This is pretty much a straight port of the Protonect program bundled with
 # libfreenect2.
@@ -44,6 +50,7 @@ cv2.startWindowThread()
 
 # Main loop
 idx  = 0
+toggle = False
 while 1:
     frames = frameListener.waitForNewFrame()
 
@@ -54,8 +61,7 @@ while 1:
     (undistorted,registered, bigdepth) = registration.apply(rgbFrame=rgbFrame, depthFrame=depthFrame)
 
     depth_frame = bigdepth.getDepthData()
-    h = 480
-    w = 640
+
     # Crop out patches of the mapped depth image. This is necessary because the RGB
     # camera has a wider field of view than the depth sensor
     cy, cx = (depth_frame.shape[0] - h)/2 , (depth_frame.shape[1] - w)/2
@@ -68,17 +74,25 @@ while 1:
 
     # Make the depth appear nice (may cost some performance here)
     dmin = 0.0
-    dmax = 2000.0   # 3m
+    dmax = 3000.0   # 3m
     s = 255.0/(dmax - dmin)
     dd = ((depth_frame - dmin) * s).astype(np.uint8)
     dst = cv2.applyColorMap(dd,2)
 
+    # Render
     cv2.imshow("Depth",dst)
     cv2.imshow("RGB", color_frame)
 
-    # Wait some seconds
+    # Wait some seconds and make space for keyboard inputs
     k = cv2.waitKey(5)
-    if k == ord("c"):
+    if k == ord("c") or k == 63277:
+        if toggle:
+            print "Stopping recorder"
+        else:
+            print "Starting recorder"
+        toggle = not toggle
+    # Dump
+    if toggle and idx % DUMP_INTERVAL == 0:
         # Dump both bgr and depth
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
@@ -88,7 +102,7 @@ while 1:
         np.save(REPO_HOME + "/" + st + "_bgr.npy", color_frame)
     # This call is mandatory and required by libfreenect2!
     frameListener.release()
-
+    idx += 1
 
 kinect.stop()
 # kinect.close()

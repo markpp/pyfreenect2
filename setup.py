@@ -12,7 +12,8 @@ libfreenect2_module = Extension("_pyfreenect2",
 		"src/Registration.cpp",
 		"src/SyncMultiFrameListener.cpp"],
         extra_compile_args = ["-fpermissive"],
-	include_dirs=[numpy.get_include()],
+	include_dirs=[numpy.get_include(), '/usr/local/include'],
+    library_dirs=['/usr/local/lib'],
 	define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")])
 
 setup(name="pyfreenect2",
