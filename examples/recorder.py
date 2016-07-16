@@ -7,30 +7,45 @@ import datetime
 import cv2
 import scipy.misc
 import numpy as np
-
+from multiprocessing import Process, Queue
 import pyfreenect2
 
-import matplotlib.pyplot as plt
-
-
+"""
+Config section
+"""
+# Folder where to store data
 REPO_HOME = "/Users/sebastian/Projects/food3d/"
-DUMP_INTERVAL = 10  # Dump every 50. frame
-
-# Center crop frame size
+# Dump interval in frames
+DUMP_INTERVAL = 1
+# Cropping sizes
 h = 480
 w = 640
 
-# This is pretty much a straight port of the Protonect program bundled with
-# libfreenect2.
+def disk_writer():
+    """
+    Write data to disk async via our threadsafe queue
+    """
+    while(True):
+        data = q.get(block=True)
+        color_frame, depth_frame = data
 
+        ts = time.time()
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S_%f')
+        st = "kinectv2_" + st
+
+        np.save(REPO_HOME + "/" + st + "_depth.npy", depth_frame)
+        np.save(REPO_HOME + "/" + st + "_bgr.npy", color_frame)
+
+
+"""
+Start main program
+"""
 # Initialize device
 serialNumber = pyfreenect2.getDefaultDeviceSerialNumber()
 kinect = pyfreenect2.Freenect2Device(serialNumber, pyfreenect2.USE_OPENGL_PACKET_PIPELINE)
 
 # Set up frame listener
 frameListener = pyfreenect2.SyncMultiFrameListener(pyfreenect2.Frame.COLOR, pyfreenect2.Frame.IR, pyfreenect2.Frame.DEPTH)
-
-print frameListener
 kinect.setColorFrameListener(frameListener)
 kinect.setIrAndDepthFrameListener(frameListener)
 
@@ -48,7 +63,15 @@ cv2.namedWindow("RGB")
 cv2.namedWindow("Depth")
 cv2.startWindowThread()
 
-# Main loop
+# Create a threadsafe queue to dump data async
+q = Queue()
+
+# Spawn the disk writer daemon
+p = Process(target=disk_writer)
+p.daemon = True
+p.start()
+
+# Main loop starts here
 idx  = 0
 toggle = False
 while 1:
@@ -84,7 +107,7 @@ while 1:
     cv2.imshow("RGB", color_frame)
 
     # Wait some seconds and make space for keyboard inputs
-    k = cv2.waitKey(5)
+    k = cv2.waitKey(1)
     if k == ord("c") or k == 63277:
         if toggle:
             print "Stopping recorder"
@@ -93,16 +116,14 @@ while 1:
         toggle = not toggle
     # Dump
     if toggle and idx % DUMP_INTERVAL == 0:
-        # Dump both bgr and depth
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S')
-        st = "kinectv2_" + st
-        print "Saving to " + REPO_HOME + " with prefix " + st
-        np.save(REPO_HOME + "/" + st + "_depth.npy", depth_frame)
-        np.save(REPO_HOME + "/" + st + "_bgr.npy", color_frame)
+        q.put((color_frame, depth_frame))
     # This call is mandatory and required by libfreenect2!
     frameListener.release()
     idx += 1
 
 kinect.stop()
+
+# The kinect is has stopped but program needs to finish dumping the data to disk first
+
+p.join()
 # kinect.close()
