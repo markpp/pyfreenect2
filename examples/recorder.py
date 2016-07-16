@@ -9,14 +9,29 @@ import scipy.misc
 import numpy as np
 from multiprocessing import Process, Queue
 import pyfreenect2
+import argparse
+
+parser = argparse.ArgumentParser(description='Record depth data live and dump to disk.')
+parser.add_argument('--s', metavar='subfolder', nargs='+',
+                   help='The subfolder to dump data to')
+
+args = parser.parse_args()
+
+sub = ""
+if args.s:
+    sub = args.s[0]
 
 """
 Config section
 """
+# JET color scheme
+jet = False
+# Rescale for visualization
+rescale = True
 # Folder where to store data
-REPO_HOME = "/Users/sebastian/Projects/food3d/"
-# Dump interval in frames
-DUMP_INTERVAL = 1
+REPO_HOME = "/Users/sebastian/Projects/food3d/data/"
+# Dump interval in frames.
+DUMP_INTERVAL = 2
 # Cropping sizes
 h = 480
 w = 640
@@ -33,8 +48,9 @@ def disk_writer():
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y_%m_%d_%H_%M_%S_%f')
         st = "kinectv2_" + st
 
-        np.save(REPO_HOME + "/" + st + "_depth.npy", depth_frame)
-        np.save(REPO_HOME + "/" + st + "_bgr.npy", color_frame)
+        # Save in compressed format so save some memory
+        np.savez_compressed(REPO_HOME + "/" + st + "_depth.npz", depth_frame)
+        np.savez_compressed(REPO_HOME + "/" + st + "_bgr.npz", color_frame)
 
 
 """
@@ -48,6 +64,9 @@ kinect = pyfreenect2.Freenect2Device(serialNumber, pyfreenect2.USE_OPENGL_PACKET
 frameListener = pyfreenect2.SyncMultiFrameListener(pyfreenect2.Frame.COLOR, pyfreenect2.Frame.IR, pyfreenect2.Frame.DEPTH)
 kinect.setColorFrameListener(frameListener)
 kinect.setIrAndDepthFrameListener(frameListener)
+
+# Movie target dir
+REPO_HOME += "/" + sub
 
 # Start recording
 kinect.start()
@@ -74,7 +93,20 @@ p.start()
 # Main loop starts here
 idx  = 0
 toggle = False
+current = time.time()
+last = time.time()
+fps = 0
+fps_idx = 0
 while 1:
+    fps += 1
+    current = time.time()
+    if (current - last) > 1:
+        last = time.time()
+        fps_idx += 1
+        if fps_idx % 5 == 0:
+            print "[INFO] Running at %i FPS" % fps
+        fps = 0
+
     frames = frameListener.waitForNewFrame()
 
     # Grab a framepair for registration
@@ -96,13 +128,20 @@ while 1:
     color_frame = color_frame[cy:cy+h,cx:cx+w]
 
     # Make the depth appear nice (may cost some performance here)
-    dmin = 0.0
-    dmax = 3000.0   # 3m
-    s = 255.0/(dmax - dmin)
-    dd = ((depth_frame - dmin) * s).astype(np.uint8)
-    dst = cv2.applyColorMap(dd,2)
-
+    if rescale:
+        dmin = 0.0
+        dmax = 3000.0   # 3m
+        s = 255.0/(dmax - dmin)
+        dd = ((depth_frame - dmin) * s).astype(np.uint8)
+    else:
+        dd = depth_frame
+    # Apply color scheme
+    if jet:
+        dst = cv2.applyColorMap(dd,2)
+    else:
+        dst = dd
     # Render
+    # TODO Switch to something with more performance here. Either GLUT or something else
     cv2.imshow("Depth",dst)
     cv2.imshow("RGB", color_frame)
 
@@ -110,9 +149,12 @@ while 1:
     k = cv2.waitKey(1)
     if k == ord("c") or k == 63277:
         if toggle:
-            print "Stopping recorder"
+            print "[INFO] Stopping recorder"
         else:
-            print "Starting recorder"
+            print "[INFO] Starting recorder with base dir: %s" % REPO_HOME
+            # Create directory if necessary
+            if not os.path.exists(REPO_HOME):
+                os.makedirs(REPO_HOME)
         toggle = not toggle
     # Dump
     if toggle and idx % DUMP_INTERVAL == 0:
