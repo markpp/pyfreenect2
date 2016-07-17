@@ -24,14 +24,16 @@ if args.s:
 """
 Config section
 """
+# Render RGB in a separate window
+render_rgb = False
 # JET color scheme
-jet = False
+jet = True
 # Rescale for visualization
 rescale = True
 # Folder where to store data
 REPO_HOME = "/Users/sebastian/Projects/food3d/data/"
-# Dump interval in frames.
-DUMP_INTERVAL = 2
+# Dump interval in frames. At 640x480 the loop currently runs at ~11 FPS on a Mac Pro 13'
+DUMP_INTERVAL = 1
 # Cropping sizes
 h = 480
 w = 640
@@ -78,7 +80,8 @@ print "Kinect firmware: %s" % kinect.firmware_version
 registration = pyfreenect2.Registration(kinect)
 
 # Initialize OpenCV stuff
-cv2.namedWindow("RGB")
+if render_rgb:
+    cv2.namedWindow("RGB")
 cv2.namedWindow("Depth")
 cv2.startWindowThread()
 
@@ -143,7 +146,8 @@ while 1:
     # Render
     # TODO Switch to something with more performance here. Either GLUT or something else
     cv2.imshow("Depth",dst)
-    cv2.imshow("RGB", color_frame)
+    if render_rgb:
+        cv2.imshow("RGB", color_frame)
 
     # Wait some seconds and make space for keyboard inputs
     k = cv2.waitKey(1)
