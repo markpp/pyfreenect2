@@ -133,7 +133,7 @@ while 1:
     # Make the depth appear nice (may cost some performance here)
     if rescale:
         dmin = 0.0
-        dmax = 3000.0   # 3m
+        dmax = 500.0   # 3m
         s = 255.0/(dmax - dmin)
         dd = ((depth_frame - dmin) * s).astype(np.uint8)
     else:
