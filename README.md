@@ -43,7 +43,7 @@ What this fork has in addition (might be outdated at the time of read)
 - Pipeline argument
 - The original code didn't compile on my machine when calling `import_array()`. I fixed the makro in the C++ code.
 
-What to when working with 3D Food data on a Mac
+What to do when working with 3D Food data on a Mac
 ---------
 1. We've only tested this running on system (brew's Cellar) Python, not in any virtual environment.
 2. Make sure [libfreenect2](https://github.com/OpenKinect/libfreenect2) is installed properly. They've got a section on how to install on Mac OS X.
