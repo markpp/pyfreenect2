@@ -51,5 +51,5 @@ What to do when working with 3D Food data on a Mac
 4. Run ```recorder.py``` in the examples folder of this repository. Make sure the configuration items within that file (folders) are set to valid and existing locations on disk.
 5. Use the commandline argument ```--s``` to specify a sub-folder to dump the data in.
 6. Use the c-Key to start capturing. Use the c-Key again to stop capturing. You should see RGB-D pairs being saved in the location specified in the configuration items.
-7. Sometimes the program crashes due to LIB_USB exceptions, I unfortunately don't have a workaround that other than restarting the process.
+7. Sometimes the program crashes due to LIB_USB exceptions, I unfortunately don't have a workaround for that other than restarting the process.
 8. Before quitting make sure to leave the program open for a couple of seconds due to output buffers being emptied by the storage thread.
