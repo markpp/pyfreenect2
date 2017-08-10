@@ -12,14 +12,14 @@ import pyfreenect2
 
 import matplotlib.pyplot as plt
 
-REPO_HOME = "/Users/sebastian/Projects/food3d/"
+REPO_HOME = "/Users/markpp/Documents/github/pyfreenect2/output"
 
 # This is pretty much a straight port of the Protonect program bundled with
 # libfreenect2.
 
 # Initialize device
 serialNumber = pyfreenect2.getDefaultDeviceSerialNumber()
-kinect = pyfreenect2.Freenect2Device(serialNumber, pyfreenect2.USE_OPENGL_PACKET_PIPELINE)
+kinect = pyfreenect2.Freenect2Device(serialNumber, pyfreenect2.USE_CUDA_PACKET_PIPELINE)
 
 # Set up frame listener
 frameListener = pyfreenect2.SyncMultiFrameListener(pyfreenect2.Frame.COLOR, pyfreenect2.Frame.IR, pyfreenect2.Frame.DEPTH)
@@ -88,6 +88,8 @@ while 1:
         np.save(REPO_HOME + "/" + st + "_bgr.npy", color_frame)
     # This call is mandatory and required by libfreenect2!
     frameListener.release()
+    if k == ord("q"):
+    	break
 
 
 kinect.stop()

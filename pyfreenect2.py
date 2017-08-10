@@ -8,7 +8,8 @@ ExtractedKinectFrame = namedtuple("ExtractedKinectFrame",
 USE_DEFAULT_PACKET_PIPELINE = 0
 USE_CPU_PACKET_PIPELINE = 1
 USE_OPENGL_PACKET_PIPELINE = 2
-
+USE_OPENCL_PACKET_PIPELINE = 3
+USE_CUDA_PACKET_PIPELINE = 4
 
 def swap_c0c2(a):
     a2 = a.copy()

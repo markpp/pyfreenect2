@@ -11,7 +11,7 @@ PyObject *py_Freenect2Device_new(PyObject *self, PyObject *args) {
 		return NULL;
     int pipe = p;
     Freenect2Device *device = NULL;
-    if(pipe > 0 && pipe < 3) {
+    if(pipe > 0 && pipe < 5) {
         libfreenect2::PacketPipeline *pipeline = 0;
         if(pipe == 1) {
             std::cout << "[PyFreeNect2] Using CPU packet pipeline." << std::endl;
@@ -20,6 +20,14 @@ PyObject *py_Freenect2Device_new(PyObject *self, PyObject *args) {
         else if(pipe == 2) {
             std::cout << "[PyFreeNect2] Using OpenGL packet pipeline." << std::endl;
             pipeline = new libfreenect2::OpenGLPacketPipeline();
+        }
+        else if(pipe == 3) {
+            std::cout << "[PyFreeNect2] Using OpenCL packet pipeline." << std::endl;
+            pipeline = new libfreenect2::OpenCLPacketPipeline();
+        }
+        else if(pipe == 4) {
+            std::cout << "[PyFreeNect2] Using CUDA packet pipeline." << std::endl;
+            pipeline = new libfreenect2::CudaPacketPipeline();
         }
         // todo add CudaPacketPipeline and OpenCLPacketPipeline
         else {
